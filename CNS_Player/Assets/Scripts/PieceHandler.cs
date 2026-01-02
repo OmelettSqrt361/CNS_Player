@@ -12,12 +12,14 @@ public class PieceHandler : MonoBehaviour
 
     [SerializeField] private float moveSpeed = 5f; // units per second
     private bool isMoving = false;
+    public int realSpot;
 
     // Start is called before the first frame update
     void Start()
     {
         transform.position = positions[0].thisSpot.position;
         currentPos = 0;
+        realSpot = positions[currentPos].id;
     }
 
     // Update is called once per frame
@@ -50,17 +52,19 @@ public class PieceHandler : MonoBehaviour
             currentPos++;
         }
         currentPos = targetPos;
+        realSpot = positions[currentPos].id;
 
         isMoving = false;
 
 
-        onComplete.Invoke();
+        onComplete?.Invoke();
     }
 
     public void KillPiece()
     {
         transform.position = positions[0].thisSpot.position;
         currentPos = 0;
+        realSpot = positions[currentPos].id;
     }
 
     public bool CanMove(int dice)

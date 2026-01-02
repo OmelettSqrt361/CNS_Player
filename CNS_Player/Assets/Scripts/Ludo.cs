@@ -37,7 +37,40 @@ public class Ludo : MonoBehaviour
         if (isPlayerUp)
         {
             // Player logic
-            waitingForMove = true;
+            bool movable = true;
+            foreach (var p in player)
+            {
+                if (p.CanMove(diceValue))
+                {
+                    bool canMove = true;
+                    foreach (var other in player)
+                    {
+                        if(other.realSpot == p.positions[p.currentPos + diceValue].id)
+                        {
+                            canMove = false;
+                            break;
+                        }
+                    }
+                    if (canMove)
+                    {
+                        movable = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    movable = false;
+                }
+            }
+            if (movable)
+            {
+                waitingForMove = true;
+            }
+            else
+            {
+                waitingForMove = false;
+                NoMove();
+            }
             
         } else
         {
@@ -86,31 +119,29 @@ public class Ludo : MonoBehaviour
         {
             return;
         }
-
-        bool canMove = true;
         if(pieceToMove.CanMove(diceValue))
         {
-            foreach (var playerPiece in player)
+            bool canMove = true;
+            foreach (var p in player)
             {
-                if (playerPiece.positions[playerPiece.currentPos].id == pieceToMove.positions[pieceToMove.currentPos + diceValue].id)
+                if(p.realSpot == pieceToMove.positions[pieceToMove.currentPos + diceValue].id)
                 {
                     canMove = false;
+                    break;
                 }
             }
             if (canMove)
             {
                 pieceToMove.MovePiece(diceValue, () => EndTurn(pieceToMove));
-                waitingForMove = false;
             }
             else
             {
-                Debug.Log("Couldn't move the piece");
+                Debug.Log("This piece cannot move");
             }
-
         }
         else
         {
-            Debug.Log("Couldn't move the piece");
+            Debug.Log("This piece cannot move");
         }
     }
 
@@ -122,11 +153,12 @@ public class Ludo : MonoBehaviour
             if (pieceToMove.CanMove(diceValue))
             {
                 bool canMove = true;
-                foreach (var pieceOther in cmp)
+                foreach (var other in cmp)
                 {
-                    if (pieceToMove.positions[pieceToMove.currentPos + diceValue].id == pieceOther.positions[pieceOther.currentPos].id)
+                    if (other.realSpot == pieceToMove.positions[pieceToMove.currentPos + diceValue].id)
                     {
                         canMove = false;
+                        break;
                     }
                 }
                 if (canMove)
@@ -140,6 +172,10 @@ public class Ludo : MonoBehaviour
             PieceHandler choice = movable[Random.Range(0, movable.Count)];
             choice.MovePiece(diceValue, () => EndTurn(choice));
         }
+        else
+        {
+            NoMove();
+        }
     }
 
     void EndTurn(PieceHandler moved)
@@ -148,7 +184,7 @@ public class Ludo : MonoBehaviour
         {
             foreach (var e in cmp)
             {
-                if(e.CompareSpots(moved,0))
+                if(moved.realSpot == e.realSpot)
                 {
                     e.KillPiece();
                 }
@@ -158,12 +194,21 @@ public class Ludo : MonoBehaviour
         {
             foreach (var e in player)
             {
-                if (e.CompareSpots(moved, 0))
+                if (moved.realSpot == e.realSpot)
                 {
                     e.KillPiece();
                 }
             }
         }
+
+        isPlayerUp = !isPlayerUp;
+        ChangeButtons();
+        StartTurn();
+    }
+
+    void NoMove()
+    {
+        Debug.Log("The current player couldn't make a move");
 
         isPlayerUp = !isPlayerUp;
         ChangeButtons();

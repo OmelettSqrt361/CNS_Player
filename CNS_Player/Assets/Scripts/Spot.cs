@@ -7,7 +7,7 @@ public class Spot : MonoBehaviour
     public int id;
     public Transform thisSpot;
 
-    private void Start()
+    private void Awake()
     {
         thisSpot = this.transform;
     }
