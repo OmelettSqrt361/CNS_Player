@@ -16,6 +16,24 @@ public class Ludo : MonoBehaviour
     private bool waitingForMove;
     public bool isPlayerUp;
 
+    public Sprite[] diceStates;
+
+    [SerializeField] private float rollDuration = 0.8f;
+    [SerializeField] private float rollFrameDelay = 0.05f;
+    private Coroutine rollRoutine;
+
+    public Image enemyDice;
+
+    public enum diceType
+    {
+        Dice6,
+        Coin,
+        Tetrahedra
+    };
+
+    public diceType dropDown;
+    public bool waitForDiceRoll;
+
 
     void Start()
     {
@@ -64,18 +82,24 @@ public class Ludo : MonoBehaviour
             }
             if (movable)
             {
-                waitingForMove = true;
+                waitForDiceRoll = true;
             }
             else
             {
                 waitingForMove = false;
+                waitForDiceRoll = false;
                 NoMove();
             }
             
         } else
         {
             // Ai logic
-            AiMovement();
+            StartCoroutine(AiMovementCoroutine());
+        }
+
+        if (WinCondition())
+        {
+            return;
         }
     }
 
@@ -145,8 +169,22 @@ public class Ludo : MonoBehaviour
         }
     }
 
-    void AiMovement()
+    IEnumerator AiMovementCoroutine()
     {
+        diceValue = Random.Range(1, diceMax + 1);
+        Debug.Log($"AI Rolled {diceValue}");
+
+        float elapsed = 0f;
+        while (elapsed < rollDuration)
+        {
+            int randomFace = Random.Range(0, diceStates.Length);
+            enemyDice.sprite = diceStates[randomFace];
+
+            elapsed += rollFrameDelay;
+            yield return new WaitForSeconds(rollFrameDelay);
+        }
+        enemyDice.sprite = diceStates[diceValue - 1];
+
         List<PieceHandler> movable = new List<PieceHandler>();
         foreach (var pieceToMove in cmp)
         {
@@ -161,13 +199,11 @@ public class Ludo : MonoBehaviour
                         break;
                     }
                 }
-                if (canMove)
-                {
-                    movable.Add(pieceToMove);
-                }
+                if (canMove) movable.Add(pieceToMove);
             }
         }
-        if(movable.Count != 0)
+
+        if (movable.Count != 0)
         {
             PieceHandler choice = movable[Random.Range(0, movable.Count)];
             choice.MovePiece(diceValue, () => EndTurn(choice));
@@ -176,6 +212,8 @@ public class Ludo : MonoBehaviour
         {
             NoMove();
         }
+
+        yield break;
     }
 
     void EndTurn(PieceHandler moved)
@@ -217,8 +255,45 @@ public class Ludo : MonoBehaviour
 
     void RollDice()
     {
-        diceValue = Random.Range(1, diceMax+1);
+
+        diceValue = Random.Range(1, diceMax + 1);
         Debug.Log($"Rolled {diceValue}");
+        if (isPlayerUp)
+        {
+            waitForDiceRoll = true;
+        }
+    }
+
+    public void PlayerRollDice(Image show)
+    {
+        if (!waitForDiceRoll) return;
+
+        if (dropDown == diceType.Dice6)
+        {
+            if (rollRoutine != null)
+                StopCoroutine(rollRoutine);
+
+            rollRoutine = StartCoroutine(RollDiceAnimation(show));
+        }
+    }
+
+    IEnumerator RollDiceAnimation(Image show)
+    {
+        waitForDiceRoll = false;
+
+        float elapsed = 0f;
+
+        while (elapsed < rollDuration)
+        {
+            int randomFace = Random.Range(0, diceStates.Length);
+            show.sprite = diceStates[randomFace];
+
+            elapsed += rollFrameDelay;
+            yield return new WaitForSeconds(rollFrameDelay);
+        }
+
+        show.sprite = diceStates[diceValue - 1];
+        waitingForMove = true;
     }
 
     void ChangeButtons()
