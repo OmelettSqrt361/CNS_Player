@@ -35,7 +35,7 @@ public class PieceHandler : MonoBehaviour
     {
         isMoving = true;
 
-        int targetPos = currentPos + dice;
+        int targetPos = Mathf.Min(currentPos + dice,positions.Length-1);
 
         while (currentPos < targetPos)
         {
@@ -69,7 +69,8 @@ public class PieceHandler : MonoBehaviour
 
     public bool CanMove(int dice)
     {
-        return dice + currentPos < positions.Length;
+        // return dice + currentPos < positions.Length;
+        return true;
     }
 
     public void ChangeButton()

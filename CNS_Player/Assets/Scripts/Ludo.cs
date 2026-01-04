@@ -22,7 +22,14 @@ public class Ludo : MonoBehaviour
     [SerializeField] private float rollFrameDelay = 0.05f;
     private Coroutine rollRoutine;
 
+    public AutoPopupManager popup;
+    public AutoPopupManager popupWin;
+    public LudoStrategyManager strategyManager;
+    List<(string, int)> game;
+
     public Image enemyDice;
+
+    public MessageScriptTest sender;
 
     public enum diceType
     {
@@ -31,18 +38,74 @@ public class Ludo : MonoBehaviour
         Tetrahedra
     };
 
+    public enum difficulty
+    {
+        Random,
+        Easy,
+        Normal,
+        Hard,
+        Demon
+    };
+
+    public string[] easyNorm;
+    public string stageName;
+
     public diceType dropDown;
+    public difficulty chosen;
+
+    string chosenDiffName;
+
     public bool waitForDiceRoll;
 
 
     void Start()
     {
+        game = new List<(string, int)>();
+
+        bool humanIsPlayer1 = Random.value > 0.5f;
+        switch (chosen)
+        {
+            case difficulty.Random:
+                chosenDiffName = "";
+                game.Add(($"{stageName}:random",0));
+                break;
+            case difficulty.Easy:
+                chosenDiffName = easyNorm[0];
+                game.Add(($"{stageName}:{easyNorm[0]}", 0));
+                break;
+            case difficulty.Normal:
+                chosenDiffName = easyNorm[1];
+                game.Add(($"{stageName}:{easyNorm[1]}", 0));
+                break;
+            case difficulty.Hard:
+                chosenDiffName = easyNorm[2];
+                game.Add(($"{stageName}:{easyNorm[2]}", 0));
+                break;
+            case difficulty.Demon:
+                chosenDiffName = easyNorm[3];
+                game.Add(($"{stageName}:{easyNorm[3]}", 0));
+                break;
+            default:
+                chosenDiffName = "";
+                game.Add(($"{stageName}:random", 0));
+                break;
+        }
+
+        if (strategyManager != null && chosenDiffName != "")
+        {
+            strategyManager.UseStrategy(chosenDiffName);
+        }
+
+
         if (humanIsPlayer1)
         {
+            popup.ShowPopup("Začínáš! Klikni na kostku!", 200f);
             isPlayerUp = true;
         }
         else
         {
+            ChangeButtons();
+            popup.ShowPopup("Začíná soupeř!", 200f);
             isPlayerUp = false;
         }
         StartTurn();
@@ -52,54 +115,60 @@ public class Ludo : MonoBehaviour
     {
         RollDice();
 
-        if (isPlayerUp)
+        if (!WinCondition())
         {
-            // Player logic
-            bool movable = true;
-            foreach (var p in player)
+            if (isPlayerUp)
             {
-                if (p.CanMove(diceValue))
+                // Player logic
+                bool movable = true;
+                foreach (var p in player)
                 {
-                    bool canMove = true;
-                    foreach (var other in player)
+                    if (p.CanMove(diceValue))
                     {
-                        if(other.realSpot == p.positions[p.currentPos + diceValue].id)
+                        bool canMove = true;
+                        foreach (var other in player)
                         {
-                            canMove = false;
+                            if (other.realSpot == p.positions[Mathf.Min(p.currentPos + diceValue,p.positions.Length-1)].id)
+                            {
+                                canMove = false;
+                                break;
+                            }
+                        }
+                        if (canMove)
+                        {
+                            movable = true;
                             break;
                         }
                     }
-                    if (canMove)
+                    else
                     {
-                        movable = true;
-                        break;
+                        movable = false;
                     }
+                }
+                if (movable)
+                {
+                    waitForDiceRoll = true;
                 }
                 else
                 {
-                    movable = false;
+                    waitingForMove = false;
+                    waitForDiceRoll = false;
+                    NoMove();
                 }
-            }
-            if (movable)
-            {
-                waitForDiceRoll = true;
+
             }
             else
             {
-                waitingForMove = false;
-                waitForDiceRoll = false;
-                NoMove();
+                // Ai logic
+                if (chosenDiffName == "")
+                {
+                    StartCoroutine(AiMovementCoroutine());
+                }
+                else
+                {
+                    StartCoroutine(AiLoadMovementCoroutine());
+                }
             }
-            
-        } else
-        {
-            // Ai logic
-            StartCoroutine(AiMovementCoroutine());
-        }
-
-        if (WinCondition())
-        {
-            return;
         }
     }
 
@@ -115,7 +184,11 @@ public class Ludo : MonoBehaviour
         }
         if(won.Count == player.Count)
         {
+            // Restartovat hru / Jít do menu
+            popupWin.ShowPopup("Vyhrál jsi!", float.MaxValue);
             Debug.Log("Player won!!");
+
+            sender.SendJsonFile(game);
             return true;
         }
 
@@ -129,7 +202,11 @@ public class Ludo : MonoBehaviour
         }
         if (won.Count == cmp.Count)
         {
+            // Restartovat hru / Jít do menu
+            popupWin.ShowPopup("Prohrál jsi :(", float.MaxValue);
             Debug.Log("Enemy won :(");
+
+            sender.SendJsonFile(game);
             return true;
         }
 
@@ -148,7 +225,7 @@ public class Ludo : MonoBehaviour
             bool canMove = true;
             foreach (var p in player)
             {
-                if(p.realSpot == pieceToMove.positions[pieceToMove.currentPos + diceValue].id)
+                if(p.realSpot == pieceToMove.positions[Mathf.Min(pieceToMove.currentPos + diceValue,pieceToMove.positions.Length-1)].id)
                 {
                     canMove = false;
                     break;
@@ -156,15 +233,20 @@ public class Ludo : MonoBehaviour
             }
             if (canMove)
             {
+                game.Add((BuildKey(player, cmp, diceValue), player.IndexOf(pieceToMove)));
                 pieceToMove.MovePiece(diceValue, () => EndTurn(pieceToMove));
             }
             else
             {
+                // Tato figurka se nemůže hýbat
+                popup.ShowPopup("Tat figurka se nemůže hýbat", 2);
                 Debug.Log("This piece cannot move");
             }
         }
         else
         {
+            // Tato figurka se nemůže hýbat
+            popup.ShowPopup("Tat figurka se nemůže hýbat", 2);
             Debug.Log("This piece cannot move");
         }
     }
@@ -205,7 +287,9 @@ public class Ludo : MonoBehaviour
 
         if (movable.Count != 0)
         {
-            PieceHandler choice = movable[Random.Range(0, movable.Count)];
+            int rand = Random.Range(0, movable.Count);
+            PieceHandler choice = movable[rand];
+            game.Add((BuildKey(player, cmp, diceValue), cmp.IndexOf(choice)));
             choice.MovePiece(diceValue, () => EndTurn(choice));
         }
         else
@@ -215,6 +299,96 @@ public class Ludo : MonoBehaviour
 
         yield break;
     }
+
+    IEnumerator AiLoadMovementCoroutine()
+    {
+        // Roll the dice
+        diceValue = Random.Range(1, diceMax + 1);
+        Debug.Log($"AI Rolled {diceValue}");
+
+        // Animate dice
+        float elapsed = 0f;
+        while (elapsed < rollDuration)
+        {
+            int randomFace = Random.Range(0, diceStates.Length);
+            enemyDice.sprite = diceStates[randomFace];
+
+            elapsed += rollFrameDelay;
+            yield return new WaitForSeconds(rollFrameDelay);
+        }
+        enemyDice.sprite = diceStates[diceValue - 1];
+
+        string key = BuildKey(cmp, player, diceValue);
+        
+
+        Debug.Log($"Strategy key: {key}");
+
+        PieceHandler pieceToMove = null;
+
+        // Check strategy first
+        int? moveIndex = strategyManager.GetMove(key);
+        if (moveIndex.HasValue)
+        {
+            pieceToMove = cmp[moveIndex.Value];
+            Debug.Log($"AI uses strategy to move piece {moveIndex.Value}");
+        }
+        else
+        {
+            Debug.Log("Strategy did not have a move, falling back to random");
+
+            // Fallback to random if strategy doesn't have a move
+            List<PieceHandler> movable = new List<PieceHandler>();
+            foreach (var piece in cmp)
+            {
+                if (piece.CanMove(diceValue))
+                {
+                    bool canMove = true;
+                    foreach (var other in cmp)
+                    {
+                        if (other.realSpot == piece.positions[piece.currentPos + diceValue].id)
+                        {
+                            canMove = false;
+                            break;
+                        }
+                    }
+                    if (canMove) movable.Add(piece);
+                }
+            }
+
+            if (movable.Count != 0)
+                pieceToMove = movable[Random.Range(0, movable.Count)];
+        }
+
+        // Execute move or no move
+        if (pieceToMove != null)
+        {
+            game.Add((BuildKey(player, cmp, diceValue), cmp.IndexOf(pieceToMove)));
+            pieceToMove.MovePiece(diceValue, () => EndTurn(pieceToMove));
+        }
+        else
+        {
+            NoMove();
+        }
+    }
+
+    string BuildKey(List<PieceHandler> playerPieces, List<PieceHandler> aiPieces, int dice)
+    {
+        string PositionsToString(List<PieceHandler> pieces)
+        {
+            int[] pos = new int[pieces.Count];
+            for (int i = 0; i < pieces.Count; i++)
+                pos[i] = pieces[i].currentPos; // Use realSpot to match your JSON
+            System.Array.Sort(pos);
+            return "[" + string.Join(",", pos) + "]";
+        }
+
+        string playerStr = PositionsToString(playerPieces);
+        string aiStr = PositionsToString(aiPieces);
+
+        return $"{playerStr};{aiStr};{dice}";
+    }
+
+
 
     void EndTurn(PieceHandler moved)
     {
@@ -239,6 +413,9 @@ public class Ludo : MonoBehaviour
             }
         }
 
+        player.Sort((a, b) => a.currentPos.CompareTo(b.currentPos));
+        cmp.Sort((a, b) => a.currentPos.CompareTo(b.currentPos));
+
         isPlayerUp = !isPlayerUp;
         ChangeButtons();
         StartTurn();
@@ -246,6 +423,15 @@ public class Ludo : MonoBehaviour
 
     void NoMove()
     {
+        // Nelze učinit tah
+        if (isPlayerUp)
+        {
+            popup.ShowPopup("Hráč nemohl učinit tah. \n Hýbe se počítač.", 4);
+        }
+        else
+        {
+            popup.ShowPopup("Počítač nemohl učinit tah. \n Můžeš hrát.", 4);
+        }
         Debug.Log("The current player couldn't make a move");
 
         isPlayerUp = !isPlayerUp;
@@ -255,7 +441,7 @@ public class Ludo : MonoBehaviour
 
     void RollDice()
     {
-
+        // Zmáčkni kostku
         diceValue = Random.Range(1, diceMax + 1);
         Debug.Log($"Rolled {diceValue}");
         if (isPlayerUp)

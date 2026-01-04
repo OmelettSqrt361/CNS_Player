@@ -2,24 +2,50 @@
 using UnityEngine.Networking;
 using System.Collections;
 using System.Text;
+using System.Collections.Generic;
+
+[System.Serializable]
+public class KeyValue
+{
+    public string key;
+    public int value;
+
+    public KeyValue(string key, int value)
+    {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+[System.Serializable]
+public class KeyValueList
+{
+    public List<KeyValue> items = new List<KeyValue>();
+}
 
 public class MessageScriptTest : MonoBehaviour
 {
-    // Put your server URL here
     public string serverUrl = "http://86.49.165.87:5000/upload";
 
-    // Example class to send
-    [System.Serializable]
-    public class PlayerData
+    // Updated function: takes List<(string,int)>
+    public void SendJsonFile(List<(string, int)> tupleData)
     {
-        public string name;
-        public int score;
-    }
+        // Convert tuples to KeyValue objects
+        List<KeyValue> keyValues = new List<KeyValue>();
+        foreach (var t in tupleData)
+        {
+            keyValues.Add(new KeyValue(t.Item1, t.Item2));
+        }
 
-    // Call this to send JSON
-    public void SendJsonFile(PlayerData data)
-    {
-        string json = JsonUtility.ToJson(data); // Convert object to JSON
+        // Wrap for JsonUtility
+        KeyValueList wrapper = new KeyValueList();
+        wrapper.items = keyValues;
+
+        // Serialize to JSON
+        string json = JsonUtility.ToJson(wrapper);
+        Debug.Log("Sending JSON: " + json);
+
+        // Send to server
         StartCoroutine(PostRequest(serverUrl, json));
     }
 
@@ -41,15 +67,5 @@ public class MessageScriptTest : MonoBehaviour
         {
             Debug.LogError("Error sending JSON: " + request.error);
         }
-    }
-
-    // Example usage: send a test JSON on start
-    void Start()
-    {
-        PlayerData example = new PlayerData();
-        example.name = "PetrPavel";
-        example.score = 6969;
-
-        SendJsonFile(example);
     }
 }
