@@ -27,25 +27,20 @@ public class MessageScriptTest : MonoBehaviour
 {
     public string serverUrl = "http://86.49.165.87:5000/upload";
 
-    // Updated function: takes List<(string,int)>
     public void SendJsonFile(List<(string, int)> tupleData)
     {
-        // Convert tuples to KeyValue objects
         List<KeyValue> keyValues = new List<KeyValue>();
         foreach (var t in tupleData)
         {
             keyValues.Add(new KeyValue(t.Item1, t.Item2));
         }
 
-        // Wrap for JsonUtility
         KeyValueList wrapper = new KeyValueList();
         wrapper.items = keyValues;
 
-        // Serialize to JSON
         string json = JsonUtility.ToJson(wrapper);
         Debug.Log("Sending JSON: " + json);
 
-        // Send to server
         StartCoroutine(PostRequest(serverUrl, json));
     }
 
