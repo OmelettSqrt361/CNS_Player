@@ -26,12 +26,20 @@ public class AutoPopupManager : MonoBehaviour
         
         if (duration <= 0f) duration = defaultDuration;
 
+        KillPopup();
+
+        currentRoutine = StartCoroutine(ShowPopupCoroutine(message, duration));
+    }
+
+    public void KillPopup()
+    {
         if (currentRoutine != null)
         {
             StopCoroutine(currentRoutine);
+            currentRoutine = null;
         }
 
-        currentRoutine = StartCoroutine(ShowPopupCoroutine(message, duration));
+        popupPanel.SetActive(false);
     }
 
     private IEnumerator ShowPopupCoroutine(string message, float duration)

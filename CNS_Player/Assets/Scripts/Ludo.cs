@@ -38,50 +38,46 @@ public class Ludo : MonoBehaviour
         Tetrahedra
     };
 
-    public enum difficulty
-    {
-        Random,
-        Easy,
-        Normal,
-        Hard,
-        Demon
-    };
-
     public string[] easyNorm;
     public string stageName;
 
     public diceType dropDown;
-    public difficulty chosen;
+    public MultiScene.difficulty chosen;
 
     string chosenDiffName;
 
     public bool waitForDiceRoll;
 
+    public bool playerHasPlayed;
+
 
     void Start()
     {
         game = new List<(string, int)>();
+        chosen = MultiScene.Instance.diff;
 
         bool humanIsPlayer1 = Random.value > 0.5f;
+        playerHasPlayed = humanIsPlayer1;
+
         switch (chosen)
         {
-            case difficulty.Random:
+            case MultiScene.difficulty.Random:
                 chosenDiffName = "";
                 game.Add(($"{stageName}:random",0));
                 break;
-            case difficulty.Easy:
+            case MultiScene.difficulty.Easy:
                 chosenDiffName = easyNorm[0];
                 game.Add(($"{stageName}:{easyNorm[0]}", 0));
                 break;
-            case difficulty.Normal:
+            case MultiScene.difficulty.Normal:
                 chosenDiffName = easyNorm[1];
                 game.Add(($"{stageName}:{easyNorm[1]}", 0));
                 break;
-            case difficulty.Hard:
+            case MultiScene.difficulty.Hard:
                 chosenDiffName = easyNorm[2];
                 game.Add(($"{stageName}:{easyNorm[2]}", 0));
                 break;
-            case difficulty.Demon:
+            case MultiScene.difficulty.Demon:
                 chosenDiffName = easyNorm[3];
                 game.Add(($"{stageName}:{easyNorm[3]}", 0));
                 break;
@@ -105,7 +101,7 @@ public class Ludo : MonoBehaviour
         else
         {
             ChangeButtons();
-            popup.ShowPopup("Začíná soupeř!", 200f);
+            popup.ShowPopup("Začíná soupeř! Až dohraje klikni na kostku", 200f);
             isPlayerUp = false;
         }
         StartTurn();
@@ -113,7 +109,6 @@ public class Ludo : MonoBehaviour
 
     void StartTurn()
     {
-        RollDice();
 
         if (!WinCondition())
         {
@@ -216,11 +211,16 @@ public class Ludo : MonoBehaviour
 
     public void PieceToMove(PieceHandler pieceToMove)
     {
+
         if (!waitingForMove)
         {
+            if (waitForDiceRoll)
+            {
+                popup.ShowPopup("Hoď kostkou!");
+            }
             return;
         }
-        if(pieceToMove.CanMove(diceValue))
+        else if(pieceToMove.CanMove(diceValue))
         {
             bool canMove = true;
             foreach (var p in player)
@@ -275,7 +275,7 @@ public class Ludo : MonoBehaviour
                 bool canMove = true;
                 foreach (var other in cmp)
                 {
-                    if (other.realSpot == pieceToMove.positions[pieceToMove.currentPos + diceValue].id)
+                    if (other.realSpot == pieceToMove.positions[Mathf.Min(pieceToMove.currentPos + diceValue,pieceToMove.positions.Length -1)].id)
                     {
                         canMove = false;
                         break;
@@ -345,7 +345,7 @@ public class Ludo : MonoBehaviour
                     bool canMove = true;
                     foreach (var other in cmp)
                     {
-                        if (other.realSpot == piece.positions[piece.currentPos + diceValue].id)
+                        if (other.realSpot == piece.positions[Mathf.Min(piece.currentPos + diceValue,piece.positions.Length -1)].id)
                         {
                             canMove = false;
                             break;
@@ -413,8 +413,18 @@ public class Ludo : MonoBehaviour
             }
         }
 
+        popup.KillPopup();
+
         player.Sort((a, b) => a.currentPos.CompareTo(b.currentPos));
         cmp.Sort((a, b) => a.currentPos.CompareTo(b.currentPos));
+
+        if (!playerHasPlayed)
+        {
+            popup.ShowPopup("Klikni na svou kostku!", 200f);
+            playerHasPlayed = true;
+        }
+
+        if (waitingForMove) waitingForMove = false;
 
         isPlayerUp = !isPlayerUp;
         ChangeButtons();
@@ -478,12 +488,17 @@ public class Ludo : MonoBehaviour
             yield return new WaitForSeconds(rollFrameDelay);
         }
 
+        diceValue = Random.Range(1, diceMax + 1);
+        Debug.Log(diceValue - 1);
+        Debug.Log(diceStates.Length);
+
         show.sprite = diceStates[diceValue - 1];
         waitingForMove = true;
     }
 
     void ChangeButtons()
     {
+
         foreach (var piece in player)
         {
             piece.ChangeButton();

@@ -6,6 +6,21 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Playable_Demo.unity
-    guid: 0c46b80ca202d9f4eb42d7f1eb687790
+    path: Assets/Scenes/ChooseAGame.unity
+    guid: b7d2fdf542107d54ebc791a1deabc79e
+  - enabled: 1
+    path: Assets/Scenes/DiffSelection.unity
+    guid: faa405e7901009d47a850ce16b624743
+  - enabled: 1
+    path: Assets/Scenes/Aseb.unity
+    guid: def33c42bf5b607449c92e879d832a75
+  - enabled: 1
+    path: Assets/Scenes/Cara7.unity
+    guid: 6d1103ad5d82d9049b844c39b3945c4b
+  - enabled: 1
+    path: Assets/Scenes/KralovskaHraUr.unity
+    guid: 0e189855448c4ba47a956c1412f41512
+  - enabled: 1
+    path: Assets/Scenes/CloveceNezlobSe.unity
+    guid: 5d0c39d3eaa9963418434fc54b392731
   m_configObjects: {}
