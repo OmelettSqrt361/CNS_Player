@@ -2591,7 +2591,7 @@ MonoBehaviour:
   - {fileID: 652086964}
   - {fileID: 1437325949}
   - {fileID: 1899283315}
-  diceMax: 2
+  diceMax: 4
   humanIsPlayer1: 1
   isPlayerUp: 0
   diceStates:
@@ -2608,10 +2608,10 @@ MonoBehaviour:
   sender: {fileID: 818341793}
   easyNorm:
   - aseb_raid
-  - aseb_bullet
-  - aseb_valueIterationVSRNG
+  - aseb_bulletPlus
   - aseb_simpleScore
-  stageName: asev
+  - aseb_valueIterMinimax
+  stageName: aseb
   dropDown: 0
   chosen: 1
   waitForDiceRoll: 0
@@ -4617,12 +4617,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   strategyJsonFiles:
-  - {fileID: 4900000, guid: a24310185c6cc9a46b4c839b0b3006fe, type: 3}
-  - {fileID: 4900000, guid: d4f18c32937bdb94888fb4320a27f482, type: 3}
   - {fileID: 4900000, guid: 0611b2319791cf34b9759b8336cf98fc, type: 3}
-  - {fileID: 4900000, guid: da3006ac86797a54599ff251f3d1c04d, type: 3}
+  - {fileID: 4900000, guid: d4f18c32937bdb94888fb4320a27f482, type: 3}
   - {fileID: 4900000, guid: f86c949aa2b0a0d42be90708a41e8bfb, type: 3}
-  - {fileID: 4900000, guid: 386bb1edb5619f24ca46a7b09eadb832, type: 3}
+  - {fileID: 4900000, guid: b599ae9776b6cd54ea7e24f1fa81d354, type: 3}
 --- !u!4 &1960552288
 Transform:
   m_ObjectHideFlags: 0
