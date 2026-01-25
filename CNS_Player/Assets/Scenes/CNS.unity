@@ -362,7 +362,7 @@ MonoBehaviour:
   - {fileID: 673358015}
   - {fileID: 2075248526}
   - {fileID: 1993064124}
-  currentPos: 0
+  currentPos: 18
   buttonControl: {fileID: 164711429}
   moveSpeed: 5
   realSpot: 0
@@ -2422,7 +2422,7 @@ MonoBehaviour:
   - {fileID: 17192623}
   - {fileID: 349759913}
   - {fileID: 385834433}
-  currentPos: 0
+  currentPos: 22
   buttonControl: {fileID: 793196070}
   moveSpeed: 5
   realSpot: 0
@@ -2852,7 +2852,7 @@ MonoBehaviour:
   - {fileID: 673358015}
   - {fileID: 2075248526}
   - {fileID: 1993064124}
-  currentPos: 0
+  currentPos: 22
   buttonControl: {fileID: 983479198}
   moveSpeed: 5
   realSpot: 0
@@ -4285,7 +4285,7 @@ MonoBehaviour:
   - {fileID: 17192623}
   - {fileID: 349759913}
   - {fileID: 385834433}
-  currentPos: 0
+  currentPos: 19
   buttonControl: {fileID: 1909520199}
   moveSpeed: 5
   realSpot: 0

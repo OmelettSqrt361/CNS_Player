@@ -33,6 +33,8 @@ public class LudoDomecek : MonoBehaviour
 
     public MessageScriptTest sender;
 
+    private bool turnInProgress = false;
+
     public enum diceType
     {
         Dice6,
@@ -111,51 +113,18 @@ public class LudoDomecek : MonoBehaviour
 
     void StartTurn()
     {
+        if (turnInProgress) return;
+        turnInProgress = true;
 
         if (!WinCondition())
         {
             if (isPlayerUp)
             {
-                // Player logic
-                bool movable = true;
-                foreach (var p in player)
-                {
-                    if (p.CanMove(diceValue))
-                    {
-                        bool canMove = true;
-                        foreach (var other in player)
-                        {
-                            if (other.realSpot == p.positions[Mathf.Min(p.currentPos + diceValue, p.positions.Length - 1)].id)
-                            {
-                                canMove = false;
-                                break;
-                            }
-                        }
-                        if (canMove)
-                        {
-                            movable = true;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        movable = false;
-                    }
-                }
-                if (movable)
-                {
-                    waitForDiceRoll = true;
-                }
-                else
-                {
-                    waitingForMove = false;
-                    waitForDiceRoll = false;
-                    NoMove();
-                }
-
+                waitForDiceRoll = true;
             }
             else
             {
+
                 // Ai logic
                 if (chosenDiffName == "")
                 {
@@ -250,6 +219,8 @@ public class LudoDomecek : MonoBehaviour
 
     IEnumerator AiMovementCoroutine()
     {
+        if (isPlayerUp) yield break;
+
         diceValue = Random.Range(1, diceMax + 1);
         Debug.Log($"AI Rolled {diceValue}");
 
@@ -264,34 +235,68 @@ public class LudoDomecek : MonoBehaviour
         }
         enemyDice.sprite = diceStates[diceValue - 1];
 
-        List<FigDomecek> movable = new List<FigDomecek>();
-        foreach (var pieceToMove in cmp)
+        bool isMovable = true;
+        foreach (var p in cmp)
         {
-            if (pieceToMove.CanMove(diceValue))
+            if (p.CanMove(diceValue))
             {
                 bool canMove = true;
                 foreach (var other in cmp)
                 {
-                    if (other.realSpot == pieceToMove.positions[Mathf.Min(pieceToMove.currentPos + diceValue, pieceToMove.positions.Length - 1)].id)
+                    if (other.realSpot == p.positions[Mathf.Min(p.currentPos + diceValue, p.positions.Length - 1)].id)
                     {
                         canMove = false;
                         break;
                     }
                 }
-                if (canMove) movable.Add(pieceToMove);
+                if (canMove)
+                {
+                    isMovable = true;
+                    break;
+                }
+            }
+            else
+            {
+                isMovable = false;
             }
         }
-
-        if (movable.Count != 0)
+        if (isMovable)
         {
-            int rand = Random.Range(0, movable.Count);
-            FigDomecek choice = movable[rand];
-            game.Add((BuildKey(player, cmp, diceValue), cmp.IndexOf(choice)));
-            choice.MovePiece(diceValue, () => EndTurn(choice));
+            List<FigDomecek> movable = new List<FigDomecek>();
+            foreach (var pieceToMove in cmp)
+            {
+                if (pieceToMove.CanMove(diceValue))
+                {
+                    bool canMove = true;
+                    foreach (var other in cmp)
+                    {
+                        if (other.realSpot == pieceToMove.positions[Mathf.Min(pieceToMove.currentPos + diceValue, pieceToMove.positions.Length - 1)].id)
+                        {
+                            canMove = false;
+                            break;
+                        }
+                    }
+                    if (canMove) movable.Add(pieceToMove);
+                }
+            }
+
+            if (movable.Count != 0)
+            {
+                int rand = Random.Range(0, movable.Count);
+                FigDomecek choice = movable[rand];
+                game.Add((BuildKey(player, cmp, diceValue), cmp.IndexOf(choice)));
+                choice.MovePiece(diceValue, () => EndTurn(choice));
+            }
+            else
+            {
+                NoMove();
+                yield break;
+            }
         }
         else
         {
             NoMove();
+            yield break;
         }
 
         yield break;
@@ -330,6 +335,7 @@ public class LudoDomecek : MonoBehaviour
             {
                 NoMove();
                 Debug.Log($"This does not work lol");
+                yield break;
             }
             else
             {
@@ -373,6 +379,7 @@ public class LudoDomecek : MonoBehaviour
         else
         {
             NoMove();
+            yield break;
         }
     }
 
@@ -433,6 +440,7 @@ public class LudoDomecek : MonoBehaviour
 
         isPlayerUp = !isPlayerUp;
         ChangeButtons();
+        turnInProgress = false;
         StartTurn();
     }
 
@@ -453,7 +461,8 @@ public class LudoDomecek : MonoBehaviour
 
         isPlayerUp = !isPlayerUp;
         ChangeButtons();
-        StartTurn();
+        turnInProgress = false;
+        StartCoroutine(DelayedStartTurn());
     }
 
     void RollDice()
@@ -500,7 +509,47 @@ public class LudoDomecek : MonoBehaviour
         Debug.Log(diceStates.Length);
 
         show.sprite = diceStates[diceValue - 1];
-        waitingForMove = true;
+
+        if (isPlayerUp)
+        {
+            // Player logic
+            bool movable = true;
+            foreach (var p in player)
+            {
+                if (p.CanMove(diceValue))
+                {
+                    bool canMove = true;
+                    foreach (var other in player)
+                    {
+                        if (other.realSpot == p.positions[Mathf.Min(p.currentPos + diceValue, p.positions.Length - 1)].id)
+                        {
+                            canMove = false;
+                            break;
+                        }
+                    }
+                    if (canMove)
+                    {
+                        movable = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    movable = false;
+                }
+            }
+            if (movable)
+            {
+                waitingForMove = true;
+            }
+            else
+            {
+                waitingForMove = false;
+                waitForDiceRoll = false;
+                NoMove();
+            }
+
+        }
     }
 
     void ChangeButtons()
@@ -510,6 +559,12 @@ public class LudoDomecek : MonoBehaviour
         {
             piece.ChangeButton();
         }
+    }
+
+    IEnumerator DelayedStartTurn()
+    {
+        yield return null; // one frame delay
+        StartTurn();
     }
 
 }
