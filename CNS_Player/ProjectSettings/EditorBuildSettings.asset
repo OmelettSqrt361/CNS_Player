@@ -21,6 +21,6 @@ EditorBuildSettings:
     path: Assets/Scenes/KralovskaHraUr.unity
     guid: 0e189855448c4ba47a956c1412f41512
   - enabled: 1
-    path: Assets/Scenes/CloveceNezlobSe.unity
-    guid: 5d0c39d3eaa9963418434fc54b392731
+    path: Assets/Scenes/CNS.unity
+    guid: 8394e59434cd8ec4dbd31332e2984b60
   m_configObjects: {}

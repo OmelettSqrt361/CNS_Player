@@ -5,9 +5,17 @@ using UnityEngine.SceneManagement;
 
 public class SceneHopper : MonoBehaviour
 {
+    public int nextScene;
+
     public void SceneHop(int sceneToHop)
     {
         SceneManager.LoadScene(sceneToHop);
+    }
+
+    public void GetSceneId(int stageId)
+    {
+        MultiScene.Instance.SetStage(stageId);
+        SceneManager.LoadScene(nextScene);
     }
 
     public void GetSceneFromMultiScene(int diff)
